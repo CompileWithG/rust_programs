@@ -1,0 +1,105 @@
+Rust code is compiled to machine code using LLVM as its backend. The Rust compiler (rustc) can generate x86 assembly code by using the --emit asm flag.
+
+Let's look at some examples of Rust code and their equivalent x86 assembly (AT&T syntax).
+
+Example 1: A Simple Function
+Rust Code
+rust
+Copy code
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn main() {
+    let result = add(5, 3);
+    println!("{}", result);
+}
+Generated x86 Assembly (AT&T Syntax)
+To generate assembly:
+
+bash
+Copy code
+rustc --emit asm -C opt-level=2 example.rs
+cat example.s
+Equivalent assembly (simplified):
+
+assembly
+Copy code
+add:
+    movl    %esi, %eax      # Move second argument (b) into eax
+    addl    %edi, %eax      # Add first argument (a) to eax
+    ret                     # Return the result in eax
+%edi and %esi are registers that hold function arguments in the System V calling convention.
+The result is returned in %eax.
+Example 2: Loop (Factorial Calculation)
+Rust Code
+rust
+Copy code
+fn factorial(n: u32) -> u32 {
+    let mut result = 1;
+    let mut i = 2;
+    while i <= n {
+        result *= i;
+        i += 1;
+    }
+    result
+}
+Generated x86 Assembly (Simplified)
+assembly
+Copy code
+factorial:
+    movl    $1, %eax        # result = 1
+    movl    $2, %ecx        # i = 2
+.LBB0_1:                    # Loop starts here
+    cmpl    %edi, %ecx      # Compare i and n
+    jg      .LBB0_3         # If i > n, jump to return
+    imull   %ecx, %eax      # result *= i
+    incl    %ecx            # i += 1
+    jmp     .LBB0_1         # Repeat loop
+.LBB0_3:
+    ret                     # Return result in eax
+The loop runs by incrementing %ecx (counter).
+%eax stores the accumulated factorial result.
+Example 3: If-Else Condition
+Rust Code
+rust
+Copy code
+fn check(x: i32) -> i32 {
+    if x > 10 {
+        1
+    } else {
+        0
+    }
+}
+Generated x86 Assembly
+assembly
+Copy code
+check:
+    cmpl    $10, %edi   # Compare x with 10
+    setg    %al         # If greater, set AL register to 1
+    movzbl  %al, %eax   # Zero extend AL to EAX
+    ret
+cmpl $10, %edi: Compare x with 10.
+setg %al: Set %al to 1 if x > 10, otherwise it remains 0.
+movzbl %al, %eax: Extend %al (8-bit) to %eax (32-bit).
+How Rust Optimizes Code
+Rust heavily optimizes the generated assembly when using -C opt-level=3. For example:
+
+Optimized Rust Code
+rust
+Copy code
+fn square(x: i32) -> i32 {
+    x * x
+}
+Optimized Assembly
+assembly
+Copy code
+square:
+    imull   %edi, %edi  # Multiply x by itself
+    movl    %edi, %eax  # Move result to eax
+    ret
+Directly uses imull for multiplication instead of extra moves.
+Conclusion
+Rust compiles to very efficient assembly code due to LLVM optimizations. By using rustc --emit asm -C opt-level=3, you can inspect the generated assembly and understand how Rust translates high-level code into low-level instructions.
+
+Would you like to see more examples, such as structs, function pointers, or inline assembly? 🚀

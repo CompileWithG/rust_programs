@@ -1,0 +1,1 @@
+this is the sample file for fs::read_to_string function
